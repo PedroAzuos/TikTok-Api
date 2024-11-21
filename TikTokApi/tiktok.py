@@ -180,23 +180,23 @@ class TikTokApi:
 
         await page.goto(url)
 
-        # scroll to the bottom:
-        _prev_height = -1
-        while True:
-            self.logger.info("Scrolling to page bottom...")
-            await page.mouse.wheel(1000, 0)
-            # Wait for new content to load (change this value as needed)
-            await page.wait_for_timeout(1037)  # wait for 1000 milliseconds
-            # Check whether the scroll height changed - means more pages are there
-            new_height = await page.evaluate("document.body.scrollHeight")
-            if new_height == _prev_height:
-                self.logger.info("Hit page bottom...")
-                break
-            _prev_height = new_height
+        # # scroll to the bottom:
+        # _prev_height = -1
+        # while True:
+        #     self.logger.info("Scrolling to page bottom...")
+        #     await page.mouse.wheel(1000, 0)
+        #     # Wait for new content to load (change this value as needed)
+        #     await page.wait_for_timeout(1037)  # wait for 1000 milliseconds
+        #     # Check whether the scroll height changed - means more pages are there
+        #     new_height = await page.evaluate("document.body.scrollHeight")
+        #     if new_height == _prev_height:
+        #         self.logger.info("Hit page bottom...")
+        #         break
+        #     _prev_height = new_height
 
-        # time.sleep(10)
-        # await page.mouse.move(0, 0)
-        # await page.mouse.move(0, 100)
+        time.sleep(10)
+        await page.mouse.move(0, 0)
+        await page.mouse.move(0, 100)
 
         session = TikTokPlaywrightSession(
             context,
