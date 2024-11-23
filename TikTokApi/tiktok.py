@@ -194,9 +194,9 @@ class TikTokApi:
         #         break
         #     _prev_height = new_height
 
-        time.sleep(10)
+        time.sleep(5)
         await page.mouse.move(0, 0)
-        await page.mouse.move(0, 100)
+        await page.mouse.move(11, 53)
 
         session = TikTokPlaywrightSession(
             context,
@@ -207,6 +207,7 @@ class TikTokApi:
             base_url=url,
         )
         if ms_token is None:
+            await page.mouse.move(20, 47)
             time.sleep(sleep_after)  # TODO: Find a better way to wait for msToken
             cookies = await self.get_session_cookies(session)
             ms_token = cookies.get("msToken")
