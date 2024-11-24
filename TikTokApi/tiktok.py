@@ -180,23 +180,24 @@ class TikTokApi:
 
         await page.goto(url)
 
-        # # scroll to the bottom:
-        # _prev_height = -1
-        # while True:
-        #     self.logger.info("Scrolling to page bottom...")
-        #     await page.mouse.wheel(1000, 0)
-        #     # Wait for new content to load (change this value as needed)
-        #     await page.wait_for_timeout(1037)  # wait for 1000 milliseconds
-        #     # Check whether the scroll height changed - means more pages are there
-        #     new_height = await page.evaluate("document.body.scrollHeight")
-        #     if new_height == _prev_height:
-        #         self.logger.info("Hit page bottom...")
-        #         break
-        #     _prev_height = new_height
-
+        self.logger.debug("Moving mouse a bit...")
         time.sleep(5)
         await page.mouse.move(0, 0)
         await page.mouse.move(11, 53)
+
+        # scroll to the bottom:
+        _prev_height = -1
+        while True:
+            self.logger.debug("Scrolling to page bottom...")
+            await page.mouse.wheel(0, 1000)
+            # Wait for new content to load (change this value as needed)
+            await page.wait_for_timeout(1037)  # wait for 1000 milliseconds
+            # Check whether the scroll height changed - means more pages are there
+            new_height = await page.evaluate("document.body.scrollHeight")
+            if new_height == _prev_height:
+                self.logger.debug("Hit page bottom...")
+                break
+            _prev_height = new_height
 
         session = TikTokPlaywrightSession(
             context,
@@ -207,7 +208,6 @@ class TikTokApi:
             base_url=url,
         )
         if ms_token is None:
-            await page.mouse.move(20, 47)
             time.sleep(sleep_after)  # TODO: Find a better way to wait for msToken
             cookies = await self.get_session_cookies(session)
             ms_token = cookies.get("msToken")
