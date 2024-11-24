@@ -189,9 +189,9 @@ class TikTokApi:
         _prev_height = -1
         self.logger.debug("Scrolling to page bottom...")
         while True:
-            await page.mouse.wheel(0, 1000)
+            await page.mouse.wheel(0, 15000)
             # Wait for new content to load (change this value as needed)
-            await page.wait_for_timeout(2037)  # wait for 1000 milliseconds
+            await page.wait_for_timeout(1000)  # wait for 1000 milliseconds
             # Check whether the scroll height changed - means more pages are there
             new_height = await page.evaluate("document.body.scrollHeight")
             if new_height == _prev_height:
