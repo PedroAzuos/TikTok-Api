@@ -230,7 +230,7 @@ class Video:
             self.parent.hashtag(data=hashtag) for hashtag in data.get("challenges", [])
         ]
 
-        self.url = data.get(f"https://www.tiktok.com/@{self.author}/video/{self.id}")
+        self.url = f"https://www.tiktok.com/@{self.author}/video/{self.id}"
 
         if getattr(self, "id", None) is None:
             Video.parent.logger.error(
