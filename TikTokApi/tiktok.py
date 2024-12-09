@@ -190,7 +190,7 @@ class TikTokApi:
         _prev_height = -1
         self.logger.debug("Scrolling to page bottom...")
         while True:
-            await page.mouse.wheel(0, 15000)
+            await page.keyboard.down('End')
             time.sleep(5)
             # Wait for new content to load (change this value as needed)
             # await page.wait_for_timeout(1000)  # wait for 1000 milliseconds
