@@ -178,10 +178,11 @@ class TikTokApi:
                 else route.continue_(),
             )
 
+        self.logger.debug(f'Opening page...{url}')
         await page.goto(url)
 
-        self.logger.debug("Moving mouse a bit...")
         time.sleep(5)
+        self.logger.debug("Moving mouse a bit...")
         await page.mouse.move(0, 0)
         await page.mouse.move(11, 53)
 
@@ -189,7 +190,7 @@ class TikTokApi:
         _prev_height = -1
         self.logger.debug("Scrolling to page bottom...")
         while True:
-            await page.mouse.wheel(0, 1000)
+            await page.mouse.wheel(0, 15000)
             time.sleep(5)
             # Wait for new content to load (change this value as needed)
             # await page.wait_for_timeout(1000)  # wait for 1000 milliseconds
