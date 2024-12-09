@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from venv import logger
+
 from ..helpers import extract_video_id_from_url, requests_cookie_to_playwright_cookie
 from typing import TYPE_CHECKING, ClassVar, Iterator, Optional
 from datetime import datetime
@@ -185,7 +188,12 @@ class Video:
                     # Process or upload chunk
         """
         i, session = self.parent._get_session(**kwargs)
-        downloadAddr = self.as_dict["video"]["downloadAddr"]
+        try:
+            downloadAddr = self.as_dict["video"]["downloadAddr"]
+        except Exception as e:
+            logger.error(f'error getting video downloadAddr - asDict: {self.as_dict}')
+            raise e
+
 
         cookies = await self.parent.get_session_cookies(session)
 
