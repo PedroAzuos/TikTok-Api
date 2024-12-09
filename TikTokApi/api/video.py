@@ -187,11 +187,12 @@ class Video:
                 async for chunk in api.video(id='7041997751718137094').bytes(stream=True):
                     # Process or upload chunk
         """
+        downloadAddr = ""
         i, session = self.parent._get_session(**kwargs)
         try:
             downloadAddr = self.as_dict["video"]["downloadAddr"]
         except Exception as e:
-            logger.error(f'error getting video downloadAddr - asDict: {self.as_dict}')
+            logger.error(f'error getting video downloadAddr possible imagePost - asDict: {self.as_dict}')
             raise e
 
 
