@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import dataclasses
-import os
 from typing import Any
 import random
 import time
@@ -190,24 +189,24 @@ class TikTokApi:
         self.logger.debug("Moving mouse a bit...")
         await page.mouse.move(0, 0)
         await page.mouse.move(11, 53)
-
-        # scroll to the bottom:
-        _prev_height = -1
-        self.logger.debug("Scrolling to page bottom...")
-        while True:
-            await page.keyboard.down('End')
-            await page.keyboard.down('End')
-            time.sleep(5)
-            await page.keyboard.down('End')
-            # Wait for new content to load (change this value as needed)
-            # await page.wait_for_timeout(1000)  # wait for 1000 milliseconds
-            # Check whether the scroll height changed - means more pages are there
-            new_height = await page.evaluate("document.body.scrollHeight")
-            if new_height == _prev_height:
-                self.logger.debug("Hit page bottom...")
-                break
-            self.logger.debug("Found more content, scrolling more...")
-            _prev_height = new_height
+        #
+        # # scroll to the bottom:
+        # _prev_height = -1
+        # self.logger.debug("Scrolling to page bottom...")
+        # while True:
+        #     await page.keyboard.down('End')
+        #     await page.keyboard.down('End')
+        #     time.sleep(5)
+        #     await page.keyboard.down('End')
+        #     # Wait for new content to load (change this value as needed)
+        #     # await page.wait_for_timeout(1000)  # wait for 1000 milliseconds
+        #     # Check whether the scroll height changed - means more pages are there
+        #     new_height = await page.evaluate("document.body.scrollHeight")
+        #     if new_height == _prev_height:
+        #         self.logger.debug("Hit page bottom...")
+        #         break
+        #     self.logger.debug("Found more content, scrolling more...")
+        #     _prev_height = new_height
 
         session = TikTokPlaywrightSession(
             context,
