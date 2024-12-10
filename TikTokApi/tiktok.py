@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import dataclasses
+import os
 from typing import Any
 import random
 import time
@@ -66,8 +67,6 @@ class TikTokApi:
         """
         self.sessions = []
 
-        if logger_name is None:
-            logger_name = __name__
         self.__create_logger(logger_name, logging_level)
 
         User.parent = self
@@ -80,14 +79,20 @@ class TikTokApi:
 
     def __create_logger(self, name: str, level: int = logging.DEBUG):
         """Create a logger for the class."""
-        self.logger: logging.Logger = logging.getLogger(name)
-        self.logger.setLevel(level)
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        self.logger.addHandler(handler)
+        if name is None:
+            #create default logger
+            name = __name__
+            self.logger: logging.Logger = logging.getLogger(name)
+            self.logger.setLevel(level)
+            handler = logging.StreamHandler()
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
+        else:
+            # Get user created logger
+            self.logger: logging.Logger = logging.getLogger(name)
 
     async def __set_session_params(self, session: TikTokPlaywrightSession):
         """Set the session params for a TikTokPlaywrightSession"""
@@ -191,7 +196,9 @@ class TikTokApi:
         self.logger.debug("Scrolling to page bottom...")
         while True:
             await page.keyboard.down('End')
+            await page.keyboard.down('End')
             time.sleep(5)
+            await page.keyboard.down('End')
             # Wait for new content to load (change this value as needed)
             # await page.wait_for_timeout(1000)  # wait for 1000 milliseconds
             # Check whether the scroll height changed - means more pages are there
