@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import dataclasses
+import os
 from typing import Any
 import random
 import time
@@ -91,7 +92,7 @@ class TikTokApi:
             self.logger.addHandler(handler)
         else:
             # Get user created logger
-            self.logger: logging.getLogger(name)
+            self.logger: logging.Logger = logging.getLogger(name)
 
     async def __set_session_params(self, session: TikTokPlaywrightSession):
         """Set the session params for a TikTokPlaywrightSession"""
