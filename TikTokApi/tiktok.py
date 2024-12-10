@@ -92,7 +92,7 @@ class TikTokApi:
             self.logger.addHandler(handler)
         else:
             # Get user created logger
-            self.logger: logging.Logger = logging.getLogger(name)
+            self.logger: logging.getLogger(name)
 
     async def __set_session_params(self, session: TikTokPlaywrightSession):
         """Set the session params for a TikTokPlaywrightSession"""
