@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from venv import logger
 
+from requests import request
+
 from ..helpers import extract_video_id_from_url, requests_cookie_to_playwright_cookie
 from typing import TYPE_CHECKING, ClassVar, Iterator, Optional
 from datetime import datetime
@@ -187,13 +189,14 @@ class Video:
                 async for chunk in api.video(id='7041997751718137094').bytes(stream=True):
                     # Process or upload chunk
         """
-        downloadAddr = ""
         i, session = self.parent._get_session(**kwargs)
+
+        urls = extract_url_lists(self.as_dict)
+
         try:
-            downloadAddr = self.as_dict["video"]["downloadAddr"]
+            urls.__add__(self.as_dict["video"]["downloadAddr"])
         except Exception as e:
             logger.error(f'error getting video downloadAddr possible imagePost - asDict: {self.as_dict}')
-            raise e
 
 
         cookies = await self.parent.get_session_cookies(session)
@@ -203,16 +206,43 @@ class Video:
         h["accept-encoding"] = 'identity;q=1, *;q=0'
         h["referer"] = 'https://www.tiktok.com/'
 
+        video = bytes
         if stream:
-            async def stream_bytes():
-                async with httpx.AsyncClient() as client:
-                    async with client.stream('GET', downloadAddr, headers=h, cookies=cookies) as response:
-                        async for chunk in response.aiter_bytes():
-                            yield chunk
-            return stream_bytes()
+            for url in urls:
+                async def stream_bytes():
+                    async with httpx.AsyncClient() as client:
+                        async with client.stream('GET', url, headers=h, cookies=cookies) as response:
+                            if response.is_success and response.headers.get("Content-Type").__contains__("video"):
+                                async for chunk in response.aiter_bytes():
+                                    yield chunk
+                video = stream_bytes()
         else:
-            resp = requests.get(downloadAddr, headers=h, cookies=cookies)
-            return resp.content
+            for url in urls:
+                response = requests.get(url, headers=h, cookies=cookies)
+                logger.error(f'StatusCode {response.status_code} for download attempt uri: {url}')
+                if response.status_code == 200 and response.headers.get("Content-Type").__contains__("video"):
+                    video = response.content
+        return video
+
+def extract_url_lists(data):
+    """
+    Recursively extracts all strings from 'UrlList' keys in a nested dictionary.
+    :param data: The dictionary to search through
+    :return: A list of strings from all 'UrlList' keys
+    """
+    urls = []
+
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key == "UrlList" and isinstance(value, list):
+                urls.extend(value)  # Add strings in 'UrlList' to the result
+            else:
+                urls.extend(extract_url_lists(value))  # Recurse into sub-dictionaries or lists
+    elif isinstance(data, list):
+        for item in data:
+            urls.extend(extract_url_lists(item))  # Recurse into list elements
+
+    return urls
 
     def __extract_from_data(self) -> None:
         data = self.as_dict

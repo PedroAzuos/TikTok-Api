@@ -185,8 +185,7 @@ class TikTokApi:
 
         self.logger.debug(f'Opening page...{url}')
         await page.goto(url)
-
-        time.sleep(5)
+        time.sleep(3)
         self.logger.debug("Moving mouse a bit...")
         await page.mouse.move(0, 0)
         await page.mouse.move(11, 53)
