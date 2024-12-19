@@ -196,7 +196,7 @@ class Video:
         try:
             urls.__add__(self.as_dict["video"]["downloadAddr"])
         except Exception as e:
-            logger.error(f'error getting video downloadAddr possible imagePost - asDict: {self.as_dict}')
+            logger.error(f'Couldnt get downloadAddr - asDict: {self.id}')
 
 
         cookies = await self.parent.get_session_cookies(session)
@@ -219,7 +219,7 @@ class Video:
         else:
             for url in urls:
                 response = requests.get(url, headers=h, cookies=cookies)
-                logger.debug(f'StatusCode {response.status_code} for download attempt uri: {url}')
+                logger.info(f'StatusCode {response.status_code} for download uri: {url}')
                 if response.status_code < 300 and response.headers.get("Content-Type").__contains__("video"):
                     video = response.content
         return video
