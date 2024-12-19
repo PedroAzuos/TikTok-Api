@@ -224,25 +224,6 @@ class Video:
                     video = response.content
         return video
 
-def extract_url_lists(data):
-    """
-    Recursively extracts all strings from 'UrlList' keys in a nested dictionary.
-    :param data: The dictionary to search through
-    :return: A list of strings from all 'UrlList' keys
-    """
-    urls = []
-
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if key == "UrlList" and isinstance(value, list):
-                urls.extend(value)  # Add strings in 'UrlList' to the result
-            else:
-                urls.extend(extract_url_lists(value))  # Recurse into sub-dictionaries or lists
-    elif isinstance(data, list):
-        for item in data:
-            urls.extend(extract_url_lists(item))  # Recurse into list elements
-
-    return urls
 
     def __extract_from_data(self) -> None:
         data = self.as_dict
@@ -371,3 +352,23 @@ def extract_url_lists(data):
 
     def __str__(self):
         return f"TikTokApi.video(id='{getattr(self, 'id', None)}')"
+
+def extract_url_lists(data):
+    """
+    Recursively extracts all strings from 'UrlList' keys in a nested dictionary.
+    :param data: The dictionary to search through
+    :return: A list of strings from all 'UrlList' keys
+    """
+    urls = []
+
+    if isinstance(data, dict):
+        for key, value in data.items():
+            if key == "UrlList" and isinstance(value, list):
+                urls.extend(value)  # Add strings in 'UrlList' to the result
+            else:
+                urls.extend(extract_url_lists(value))  # Recurse into sub-dictionaries or lists
+    elif isinstance(data, list):
+        for item in data:
+            urls.extend(extract_url_lists(item))  # Recurse into list elements
+
+    return urls
