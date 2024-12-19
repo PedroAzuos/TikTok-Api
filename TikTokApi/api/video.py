@@ -219,8 +219,8 @@ class Video:
         else:
             for url in urls:
                 response = requests.get(url, headers=h, cookies=cookies)
-                logger.error(f'StatusCode {response.status_code} for download attempt uri: {url}')
-                if response.status_code == 200 and response.headers.get("Content-Type").__contains__("video"):
+                logger.debug(f'StatusCode {response.status_code} for download attempt uri: {url}')
+                if response.status_code < 300 and response.headers.get("Content-Type").__contains__("video"):
                     video = response.content
         return video
 
