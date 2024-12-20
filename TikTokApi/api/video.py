@@ -206,24 +206,30 @@ class Video:
         h["accept-encoding"] = 'identity;q=1, *;q=0'
         h["referer"] = 'https://www.tiktok.com/'
 
-        video = bytes
         if stream:
             for url in urls:
-                async def stream_bytes():
-                    async with httpx.AsyncClient() as client:
-                        async with client.stream('GET', url, headers=h, cookies=cookies) as response:
-                            if response.is_success and response.headers.get("Content-Type").__contains__("video"):
-                                async for chunk in response.aiter_bytes():
-                                    yield chunk
-                video = stream_bytes()
+                try:
+                    async def stream_bytes():
+                        async with httpx.AsyncClient() as client:
+                            async with client.stream('GET', url, headers=h, cookies=cookies) as response:
+                                if response.is_success and response.headers.get("Content-Type").__contains__("video"):
+                                    logger.info(f'StatusCode {response.status_code} for download uri: {url}')
+                                    async for chunk in response.aiter_bytes():
+                                        yield chunk
+                    return stream_bytes()
+                except Exception as e:
+                    logger.error(f"An error occurred while processing url: {url} \n {e}")
+                    continue  # Move on to the next URL
         else:
             for url in urls:
-                response = requests.get(url, headers=h, cookies=cookies)
-                logger.info(f'StatusCode {response.status_code} for download uri: {url}')
-                if response.status_code < 300 and response.headers.get("Content-Type").__contains__("video"):
-                    video = response.content
-        return video
-
+                try:
+                    response = requests.get(url, headers=h, cookies=cookies)
+                    if response.status_code < 300 and "video" in response.headers.get("Content-Type", ""):
+                        logger.info(f"StatusCode {response.status_code} for download uri: {url}")
+                        return response.content
+                except Exception as e:
+                    logger.error(f"An error occurred while processing url: {url} \n {e}")
+                    continue  # Move on to the next URL
 
     def __extract_from_data(self) -> None:
         data = self.as_dict
