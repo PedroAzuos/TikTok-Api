@@ -219,6 +219,7 @@ class Video:
 
         if stream:
             for url in urls:
+                logger.info(f'Attempting stream download from URL:{url}')
                 try:
                     async def stream_bytes():
                         async with httpx.AsyncClient() as client:
@@ -233,6 +234,7 @@ class Video:
                     continue  # Move on to the next URL
         else:
             for url in urls:
+                logger.info(f'Attempting standard download from URL:{url}')
                 try:
                     response = requests.get(url, headers=h, cookies=cookies)
                     if response.status_code < 300 and "video" in response.headers.get("Content-Type", ""):
