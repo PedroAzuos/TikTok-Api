@@ -196,8 +196,16 @@ class Video:
         try:
             urls.__add__(self.as_dict["video"]["downloadAddr"])
         except Exception as e:
-            logger.error(f'Couldnt get downloadAddr - asDict: {self.id}')
+            logger.error(f'Couldn\'t get downloadAddr - asDict: {self.id}')
             logger.error(f'Source: asDict: {self.as_dict}')
+            logger.error(e.__cause__)
+        try:
+            urls.__add__(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
+        except Exception as e:
+            logger.error(f'Couldn\'t get PlayAddr - asDict: {self.id}')
+            logger.error(e.__cause__)
+
+
 
 
         cookies = await self.parent.get_session_cookies(session)
