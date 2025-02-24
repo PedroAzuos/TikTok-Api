@@ -197,6 +197,7 @@ class Video:
             urls.__add__(self.as_dict["video"]["downloadAddr"])
         except Exception as e:
             logger.error(f'Couldnt get downloadAddr - asDict: {self.id}')
+            logger.error(f'Source: asDict: {self.as_dict}')
 
 
         cookies = await self.parent.get_session_cookies(session)
