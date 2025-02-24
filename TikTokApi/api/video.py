@@ -193,19 +193,19 @@ class Video:
 
         urls = extract_url_lists(self.as_dict)
 
-        try:
-            urls.__add__(self.as_dict["video"]["downloadAddr"])
-        except Exception as e:
-            logger.error(f'Couldn\'t get downloadAddr - asDict: {self.id}:')
-            logger.error(self.as_dict["video"]["downloadAddr"])
-            logger.error(f'Source: asDict: {self.as_dict}')
-            logger.error(e.__cause__)
-            try:
-                urls.__add__(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
-            except Exception as e:
-                logger.error(f'Couldn\'t get PlayAddr - asDict: {self.id}:')
-                logger.error(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
-                logger.error(e.__cause__)
+        # try:
+        #     urls.__add__(self.as_dict["video"]["downloadAddr"])
+        # except Exception as e:
+        #     logger.error(f'Couldn\'t get downloadAddr - asDict: {self.id}:')
+        #     logger.error(self.as_dict["video"]["downloadAddr"])
+        #     logger.error(f'Source: asDict: {self.as_dict}')
+        #     logger.error(e.__cause__)
+        #     try:
+        #         urls.__add__(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
+        #     except Exception as e:
+        #         logger.error(f'Couldn\'t get PlayAddr - asDict: {self.id}:')
+        #         logger.error(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
+        #         logger.error(e.__cause__)
 
 
 
@@ -382,6 +382,10 @@ def extract_url_lists(data):
         for key, value in data.items():
             if key == "UrlList" and isinstance(value, list):
                 urls.extend(value)  # Add strings in 'UrlList' to the result
+            elif key == "PlayAddr" and isinstance(value, list):
+                urls.extend(value)  # Add strings in 'UrlList' to the result
+            elif key== "downloadAddr" and isinstance(value, str):
+                    urls.append(value)
             else:
                 urls.extend(extract_url_lists(value))  # Recurse into sub-dictionaries or lists
     elif isinstance(data, list):
