@@ -229,10 +229,11 @@ class Video:
                                     async for chunk in response.aiter_bytes():
                                         yield chunk
 
-                    if not stream_bytes():
+                    streamedBytes = await stream_bytes()
+                    if not streamedBytes:
                         logger.info(f"No bytes returned")
                         continue  # Move on to the next url
-                    return stream_bytes()
+                    return streamedBytes
                 except Exception as e:
                     logger.error(f"An error occurred while processing url: {url} \n {e}")
                     continue  # Move on to the next URL
