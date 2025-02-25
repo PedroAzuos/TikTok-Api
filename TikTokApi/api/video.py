@@ -229,7 +229,7 @@ class Video:
                                     async for chunk in response.aiter_bytes():
                                         yield chunk
 
-                    streamedBytes = await stream_bytes()
+                    streamedBytes = stream_bytes()
                     if not streamedBytes:
                         logger.info(f"No bytes returned")
                         continue  # Move on to the next url
