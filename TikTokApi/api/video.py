@@ -224,19 +224,28 @@ class Video:
                     async def stream_bytes():
                         async with httpx.AsyncClient() as client:
                             async with client.stream('GET', url, headers=h, cookies=cookies) as response:
-                                if response.is_success and response.headers.get("Content-Type").__contains__("video"):
+                                if response.is_success and "video" in response.headers.get("Content-Type", "").lower():
                                     logger.info(f'StatusCode {response.status_code} for download uri: {url}')
+
+                                    # Peek at the first chunk
+                                    first_chunk = b""
+                                    async for chunk in response.aiter_bytes():
+                                        first_chunk = chunk
+                                        break  # Get only the first chunk
+
+                                    if not first_chunk or b'ftyp' not in first_chunk[:32]:  # Basic MP4 validation
+                                        logger.error(f"Invalid video detected for URL: {url}")
+                                        raise StopAsyncIteration
+
+                                    yield first_chunk  # Start yielding after validation
                                     async for chunk in response.aiter_bytes():
                                         yield chunk
 
-                    streamedBytes = stream_bytes()
-                    if not streamedBytes:
-                        logger.info(f"No bytes returned")
-                        continue  # Move on to the next url
-                    return streamedBytes
+                    return stream_bytes()
                 except Exception as e:
                     logger.error(f"An error occurred while processing url: {url} \n {e}")
                     continue  # Move on to the next URL
+
         else:
             for url in urls:
                 logger.info(f'Attempting standard download from URL:{url}')
@@ -244,9 +253,12 @@ class Video:
                     response = requests.get(url, headers=h, cookies=cookies)
                     if response.status_code < 300 and "video" in response.headers.get("Content-Type", ""):
                         logger.info(f"StatusCode {response.status_code} for download uri: {url}")
-                        if not response.content:
-                                logger.info(f"No bytes returned")
-                                continue # Move on to the next url
+
+                        # Validate content before returning
+                        if not response.content or b'ftyp' not in response.content[:32]:
+                            logger.info(f"Invalid video detected")
+                            continue  # Move on to the next URL
+
                         return response.content
                 except Exception as e:
                     logger.error(f"An error occurred while processing url: {url} \n {e}")
