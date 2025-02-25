@@ -228,6 +228,10 @@ class Video:
                                     logger.info(f'StatusCode {response.status_code} for download uri: {url}')
                                     async for chunk in response.aiter_bytes():
                                         yield chunk
+
+                    if not stream_bytes():
+                        logger.info(f"No bytes returned")
+                        continue  # Move on to the next url
                     return stream_bytes()
                 except Exception as e:
                     logger.error(f"An error occurred while processing url: {url} \n {e}")
@@ -239,6 +243,9 @@ class Video:
                     response = requests.get(url, headers=h, cookies=cookies)
                     if response.status_code < 300 and "video" in response.headers.get("Content-Type", ""):
                         logger.info(f"StatusCode {response.status_code} for download uri: {url}")
+                        if not response.content:
+                                logger.info(f"No bytes returned")
+                                continue # Move on to the next url
                         return response.content
                 except Exception as e:
                     logger.error(f"An error occurred while processing url: {url} \n {e}")
@@ -382,12 +389,13 @@ def extract_url_lists(data):
 
     if isinstance(data, dict):
         for key, value in data.items():
-            if key == "UrlList" and isinstance(value, list):
+            if key == "downloadAddr" and isinstance(value, str):
+                urls.append(value)
+            elif key == "UrlList" and isinstance(value, list):
                 urls.extend(value)  # Add strings in 'UrlList' to the result
             elif key == "PlayAddr" and isinstance(value, list):
                 urls.extend(value)  # Add strings in 'UrlList' to the result
-            elif key== "downloadAddr" and isinstance(value, str):
-                    urls.append(value)
+
             else:
                 urls.extend(extract_url_lists(value))  # Recurse into sub-dictionaries or lists
     elif isinstance(data, list):
