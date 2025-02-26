@@ -226,7 +226,7 @@ class Video:
                             async with client.stream('GET', url, headers=h, cookies=cookies) as streamedResponse:
                                 if streamedResponse.status_code != 200:
                                     raise InvalidResponseException(
-                                        f"Error downloading: StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
+                                        f"Error streaming:",f"StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
                                 # Peek at the first chunk
                                 first_chunk = b""
                                 async for chunk in streamedResponse.aiter_bytes():
@@ -236,6 +236,7 @@ class Video:
                                 if not first_chunk or b'ftyp' not in first_chunk[:32]:  # Basic MP4 validation
                                     raise StopAsyncIteration("Invalid first chunk not video") # onto the next url
 
+                                logger.info(f'first_chunk validated OK. Yielding stream.')
                                 yield first_chunk  # Start yielding after validation
                                 async for chunk in streamedResponse.aiter_bytes():
                                     yield chunk
@@ -257,7 +258,8 @@ class Video:
 
                         return response.content
                     else:
-                        raise InvalidResponseException(f"Error downloading: StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
+                        raise InvalidResponseException(
+                                        f"Error downloading:",f"StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
                 except Exception as e:
                     logger.error(f"An error occurred while processing url: {url} \n {e}")
                     continue  # Move on to the next URL
