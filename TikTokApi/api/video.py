@@ -224,6 +224,9 @@ class Video:
                     async def stream_bytes():
                         async with httpx.AsyncClient() as client:
                             async with client.stream('GET', url, headers=h, cookies=cookies) as streamedResponse:
+                                if streamedResponse.status_code != 200:
+                                    raise InvalidResponseException(
+                                        f"Error downloading: StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
                                 # Peek at the first chunk
                                 first_chunk = b""
                                 async for chunk in streamedResponse.aiter_bytes():
