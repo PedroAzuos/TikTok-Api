@@ -219,31 +219,52 @@ class Video:
 
         if stream:
             for url in urls:
-                logger.info(f'Attempting stream download from URL:{url}')
+                logger.info(f'Attempting stream download from URL: {url}')
                 try:
                     async def stream_bytes():
                         async with httpx.AsyncClient() as client:
                             async with client.stream('GET', url, headers=h, cookies=cookies) as streamedResponse:
                                 if streamedResponse.status_code != 200:
                                     raise InvalidResponseException(
-                                        f"Error streaming:",f"StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
+                                        f"Error streaming:",
+                                        f"StatusCode {streamedResponse.status_code} \n Content: {streamedResponse.content} download uri: {url}"
+                                    )
                                 # Peek at the first chunk
                                 first_chunk = b""
                                 async for chunk in streamedResponse.aiter_bytes():
                                     first_chunk = chunk
                                     break  # Get only the first chunk
 
-                                if not first_chunk or b'ftyp' not in first_chunk[:32]:  # Basic MP4 validation
-                                    raise StopAsyncIteration("Invalid first chunk not video") # onto the next url
+                                if not first_chunk or b'ftyp' not in first_chunk[:32]:
+                                    logger.error("Invalid first chunk not video")
+                                    return  # Exit the generator without yielding
 
-                                logger.info(f'first_chunk validated OK. Yielding stream.')
-                                yield first_chunk  # Start yielding after validation
+                                logger.info('first_chunk validated OK. Yielding stream.')
+                                yield first_chunk  # Yield the validated first chunk
+
+                                # Continue yielding the rest of the stream
                                 async for chunk in streamedResponse.aiter_bytes():
                                     yield chunk
 
-                    return stream_bytes()
+                    # Consume the generator to check the first chunk:
+                    gen = stream_bytes()
+                    try:
+                        first = await gen.__anext__()
+                    except StopAsyncIteration:
+                        # This URL did not yield valid data; move on to the next one.
+                        logger.error(f"No valid data yielded from URL: {url}")
+                        continue
+
+                    # If we got here, the first chunk is valid. Create a new generator that yields the first chunk then the rest.
+                    async def valid_stream_generator(first_chunk, gen):
+                        yield first_chunk
+                        async for chunk in gen:
+                            yield chunk
+
+                    # Return the valid generator
+                    return valid_stream_generator(first, gen)
                 except Exception as e:
-                    logger.error(f"An error occurred while streaming url: {url} \n {e}")
+                    logger.error(f"An error occurred while streaming URL: {url} \n {e}")
                     continue  # Move on to the next URL
 
         else:
