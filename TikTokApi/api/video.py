@@ -190,22 +190,7 @@ class Video:
                     # Process or upload chunk
         """
         i, session = self.parent._get_session(**kwargs)
-
-        urls = extract_url_lists(self.as_dict)
-
-        # try:
-        #     urls.__add__(self.as_dict["video"]["downloadAddr"])
-        # except Exception as e:
-        #     logger.error(f'Couldn\'t get downloadAddr - asDict: {self.id}:')
-        #     logger.error(self.as_dict["video"]["downloadAddr"])
-        #     logger.error(f'Source: asDict: {self.as_dict}')
-        #     logger.error(e.__cause__)
-        #     try:
-        #         urls.__add__(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
-        #     except Exception as e:
-        #         logger.error(f'Couldn\'t get PlayAddr - asDict: {self.id}:')
-        #         logger.error(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
-        #         logger.error(e.__cause__)
+        downloadAddr = self.as_dict["video"]["downloadAddr"]
 
         cookies = await self.parent.get_session_cookies(session)
 
@@ -213,77 +198,17 @@ class Video:
         h["range"] = 'bytes=0-'
         h["accept-encoding"] = 'identity;q=1, *;q=0'
         h["referer"] = 'https://www.tiktok.com/'
-        logger.debug(f'Cookies for request: \n {cookies}')
+
         if stream:
-            for url in urls:
-                logger.info(f'Attempting stream download from URL: {url}')
-                try:
-                    async def stream_bytes():
-                        async with httpx.AsyncClient() as client:
-                            async with client.stream('GET', url, headers=h, cookies=cookies) as streamedResponse:
-                                logger.debug("Attempting to read streamed response before accessing")
-                                await streamedResponse.aread()
-                                if streamedResponse.status_code != 200:
-                                    raise InvalidResponseException(
-                                        f"Error streaming:",
-                                        f"StatusCode {streamedResponse.status_code} \n download uri: {url}"
-                                    )
-                                # Peek at the first chunk
-                                logger.debug("Checking response first chunk")
-                                first_chunk = b""
-                                async for chunk in streamedResponse.aiter_bytes():
-                                    first_chunk = chunk
-                                    break  # Get only the first chunk
-
-                                if not first_chunk or b'ftyp' not in first_chunk[:32]:
-                                    logger.error("Invalid first chunk not video")
-                                    return  # Exit the generator without yielding
-
-                                logger.info('first_chunk validated OK. Yielding stream.')
-                                yield first_chunk  # Yield the validated first chunk
-
-                                # Continue yielding the rest of the stream
-                                async for chunk in streamedResponse.aiter_bytes():
-                                    yield chunk
-
-                    # Consume the generator to check the first chunk:
-                    gen = stream_bytes()
-                    try:
-                        first = await gen.__anext__()
-                    except StopAsyncIteration:
-                        # This URL did not yield valid data; move on to the next one.
-                        logger.error(f"No valid data yielded from URL: {url}")
-                        continue
-
-                    # If we got here, the first chunk is valid. Create a new generator that yields the first chunk then the rest.
-                    async def valid_stream_generator(first_chunk, gen):
-                        yield first_chunk
-                        async for chunk in gen:
+            async def stream_bytes():
+                async with httpx.AsyncClient() as client:
+                    async with client.stream('GET', downloadAddr, headers=h, cookies=cookies) as response:
+                        async for chunk in response.aiter_bytes():
                             yield chunk
-
-                    # Return the valid generator
-                    return valid_stream_generator(first, gen)
-                except Exception as e:
-                    logger.error(f"An error occurred while streaming URL: {url} \n {e}")
-                    continue  # Move on to the next URL
-
+            return stream_bytes()
         else:
-            for url in urls:
-                logger.info(f'Attempting standard download from URL:{url}')
-                try:
-                    response = requests.get(url, headers=h, cookies=cookies)
-                    if response.status_code == 200 and "video" in response.headers.get("Content-Type", ""):
-                        # Validate content before returning
-                        if not response.content or b'ftyp' not in response.content[:32]:
-                            raise StopIteration("Invalid video detected") ##onto the next url
-
-                        return response.content
-                    else:
-                        raise InvalidResponseException(
-                                        f"Error downloading:",f"StatusCode {response.status_code} \n Content: {response.content} download uri: {url}")
-                except Exception as e:
-                    logger.error(f"An error occurred while processing url: {url} \n {e}")
-                    continue  # Move on to the next URL
+            resp = requests.get(downloadAddr, headers=h, cookies=cookies)
+            return resp.content
 
     def __extract_from_data(self) -> None:
         data = self.as_dict
@@ -309,8 +234,6 @@ class Video:
         self.hashtags = [
             self.parent.hashtag(data=hashtag) for hashtag in data.get("challenges", [])
         ]
-
-        self.url = f"https://www.tiktok.com/@{self.author}/video/{self.id}"
 
         if getattr(self, "id", None) is None:
             Video.parent.logger.error(
