@@ -207,16 +207,13 @@ class Video:
         #         logger.error(self.as_dict["video"]["bitrateInfo"][0]["PlayAddr"])
         #         logger.error(e.__cause__)
 
-
-
-
         cookies = await self.parent.get_session_cookies(session)
 
         h = session.headers
         h["range"] = 'bytes=0-'
         h["accept-encoding"] = 'identity;q=1, *;q=0'
         h["referer"] = 'https://www.tiktok.com/'
-
+        logger.debug(f'Cookies for request: \n {cookies}')
         if stream:
             for url in urls:
                 logger.info(f'Attempting stream download from URL: {url}')
@@ -224,12 +221,15 @@ class Video:
                     async def stream_bytes():
                         async with httpx.AsyncClient() as client:
                             async with client.stream('GET', url, headers=h, cookies=cookies) as streamedResponse:
+                                logger.debug("Attempting to read streamed response before accessing")
+                                await streamedResponse.aread()
                                 if streamedResponse.status_code != 200:
                                     raise InvalidResponseException(
                                         f"Error streaming:",
-                                        f"StatusCode {streamedResponse.status_code} \n Content: {streamedResponse.content} download uri: {url}"
+                                        f"StatusCode {streamedResponse.status_code} \n download uri: {url}"
                                     )
                                 # Peek at the first chunk
+                                logger.debug("Checking response first chunk")
                                 first_chunk = b""
                                 async for chunk in streamedResponse.aiter_bytes():
                                     first_chunk = chunk
